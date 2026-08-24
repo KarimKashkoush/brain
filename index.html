@@ -300,7 +300,17 @@
   }
 
   .header {
+    position: relative;
+    z-index: 1;
+    padding: 30px;
+    color: black;
     background: #fff;
+
+    img {
+      width: 250px;
+      display: block;
+      margin: auto;
+    }
   }
 </style>
 </head>
@@ -308,7 +318,7 @@
 <div id="app">
 
   <section class="header">
-    <h2>نموذج ثلاثي الابعاد المخ</h2>
+    <img src="images.jpg" alt="Brain Icon">
   </section>
 
   <div id="loader">
@@ -326,13 +336,6 @@
     <div class="marker-ring"></div>
     <div class="marker-dot"></div>
     <div class="marker-label" id="marker-label">🧠 الفص الجبهي</div>
-  </div>
-
-  <div id="topbar">
-    <div class="brand">
-      <div class="dot"></div>
-      <h1>الفصوص الأربعة</h1>
-    </div>
   </div>
 
   <button id="reset-view">إعادة ضبط</button>
