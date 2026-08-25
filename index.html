@@ -1,893 +1,1195 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>المخ التفاعلي - الفصوص الأربعة</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --bg-0:#07090d;
-    --bg-1:#0d1119;
-    --panel:#11151f;
-    --line:#212838;
-    --ink:#e9edf5;
-    --ink-dim:#8993a8;
-    --amber:#e0a458;
-    --amber-dim:#8a6a3d;
-    --cyan:#5fd4d0;
-    --danger:#e0715f;
-  }
-  *{box-sizing:border-box; margin:0; padding:0;}
-  html,body{
-    width:100%; height:100%; overflow:hidden;
-    font-family:'Tajawal', sans-serif;
-    color:var(--ink);
-    background:var(--bg-1);
-  }
-  #app{position:relative; width:100vw; height:100vh;}
-  #canvas-holder{position:absolute; inset:0;}
-  canvas{display:block; outline:none;}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>المخ التفاعلي - الفصوص الأربعة</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg-0: #07090d;
+      --bg-1: #0d1119;
+      --panel: #11151f;
+      --line: #212838;
+      --ink: #e9edf5;
+      --ink-dim: #8993a8;
+      --amber: #e0a458;
+      --amber-dim: #8a6a3d;
+      --cyan: #5fd4d0;
+      --danger: #e0715f;
+    }
 
-  #topbar{
-    position:absolute; top:0; right:0; left:0;
-    display:flex; align-items:center; justify-content:space-between;
-    padding:18px 26px;
-    background:linear-gradient(to bottom, rgba(7,9,13,.9), rgba(7,9,13,0));
-    pointer-events:none;
-    z-index:5;
-  }
-  #topbar .brand{display:flex; align-items:baseline; gap:10px;}
-  #topbar .brand .dot{width:8px; height:8px; border-radius:50%; background:var(--amber); box-shadow:0 0 12px var(--amber);}
-  #topbar h1{font-size:17px; font-weight:700; letter-spacing:.02em;}
-  #topbar .sub{font-family:'JetBrains Mono', monospace; font-size:10.5px; color:var(--ink-dim); letter-spacing:.08em; text-transform:uppercase;}
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-  #loader{
-    position:absolute; inset:0; z-index:50;
-    display:flex; align-items:center; justify-content:center;
-    background:radial-gradient(ellipse at 50% 30%, rgba(95,212,208,0.07), transparent 60%), var(--bg-0);
-  }
-  #loader-card{text-align:center; padding:40px 34px;}
-  .loader-spinner{
-    width:50px; height:50px;
-    border:3px solid var(--line);
-    border-top-color:var(--amber);
-    border-radius:50%;
-    margin:0 auto 20px;
-    animation: spin 0.8s linear infinite;
-  }
-  @keyframes spin{to{transform:rotate(360deg);}}
-  #loader-card h2{font-size:20px; font-weight:700; margin-bottom:8px;}
-  #loader-card p{font-size:13px; color:var(--ink-dim);}
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Tajawal', sans-serif;
+      color: var(--ink);
+      background: var(--bg-1);
+    }
 
-  /* ====== النقطة الثابتة الوحيدة ====== */
-  #active-marker{
-    position:absolute;
-    width:40px;
-    height:40px;
-    margin:-20px 0 0 -20px;
-    border-radius:50%;
-    pointer-events:none;
-    z-index:7;
-    display:none;
-  }
-  #active-marker .marker-ring{
-    position:absolute;
-    inset:-8px;
-    border-radius:50%;
-    border:3px solid var(--amber);
-    animation: marker-pulse 1.5s ease-in-out infinite;
-  }
-  #active-marker .marker-dot{
-    position:absolute;
-    inset:5px;
-    border-radius:50%;
-    background:var(--amber);
-    box-shadow:0 0 40px rgba(224,164,88,0.8);
-  }
-  #active-marker .marker-label{
-    position:absolute;
-    top:44px;
-    left:50%;
-    transform:translateX(-50%);
-    background:rgba(7,9,13,0.92);
-    backdrop-filter:blur(12px);
-    padding:6px 16px;
-    border-radius:10px;
-    font-size:14px;
-    font-weight:700;
-    color:#fff;
-    white-space:nowrap;
-    border:1px solid var(--amber);
-    box-shadow:0 4px 20px rgba(0,0,0,0.5);
-  }
-  @keyframes marker-pulse{
-    0%,100%{transform:scale(1); opacity:1;}
-    50%{transform:scale(1.8); opacity:0;}
-  }
+    #app {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
 
-  /* ====== لوحة المعلومات ====== */
-  #panel{
-    position:absolute; top:0; bottom:0; left:0;
-    width:min(420px, 92vw);
-    background:var(--panel);
-    border-left:1px solid var(--line);
-    padding:88px 28px 28px;
-    transform:translateX(-100%);
-    transition:transform .4s cubic-bezier(.2,.8,.2,1);
-    z-index:20;
-    overflow-y:auto;
-  }
-  #panel.open{transform:translateX(0);}
-  #panel .tag{
-    font-family:'JetBrains Mono', monospace; font-size:10.5px; letter-spacing:.12em;
-    color:var(--cyan); text-transform:uppercase; margin-bottom:10px;
-  }
-  #panel .title-row{
-    display:flex;
-    align-items:center;
-    gap:12px;
-    margin-bottom:16px;
-  }
-  #panel .title-row h3{
-    font-size:23px;
-    font-weight:900;
-    line-height:1.4;
-    flex:1;
-  }
-  #panel .speaker-btn{
-    width:48px;
-    height:48px;
-    border-radius:50%;
-    border:2px solid var(--amber-dim);
-    background:transparent;
-    color:var(--amber);
-    font-size:24px;
-    cursor:pointer;
-    transition:all 0.3s ease;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    flex-shrink:0;
-  }
-  #panel .speaker-btn:hover{
-    background:rgba(224,164,88,0.15);
-    border-color:var(--amber);
-    transform:scale(1.1);
-  }
-  #panel .speaker-btn.speaking{
-    border-color:var(--cyan);
-    color:var(--cyan);
-    animation: speak-pulse 0.5s ease-in-out infinite alternate;
-  }
-  @keyframes speak-pulse{
-    0%{transform:scale(1);}
-    100%{transform:scale(1.1);}
-  }
-  #panel .desc{
-    font-size:15px;
-    line-height:2.1;
-    color:#c3c9d6;
-  }
-  #panel .close{
-    position:absolute; top:24px; left:24px;
-    width:34px; height:34px; border-radius:50%;
-    border:1px solid var(--line); background:transparent; color:var(--ink-dim);
-    cursor:pointer; font-size:18px; display:flex; align-items:center; justify-content:center;
-  }
-  #panel .close:hover{border-color:var(--amber); color:var(--amber);}
+    #canvas-holder {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
 
-  /* ====== قائمة الفصوص ====== */
-  #lobe-list{
-    position:absolute; bottom:26px; right:26px;
-    display:flex; flex-direction:column; gap:5px;
-    z-index:10;
-    max-width:220px;
-  }
-  .lobe-chip{
-    font-family:'Tajawal', sans-serif;
-    font-size:14px;
-    font-weight:500;
-    color:var(--ink-dim);
-    background:rgba(17,21,31,.88);
-    border:1px solid var(--line);
-    border-radius:10px;
-    padding:10px 16px;
-    cursor:pointer;
-    text-align:right;
-    transition:all .25s ease;
-    backdrop-filter:blur(4px);
-    display:flex;
-    align-items:center;
-    gap:10px;
-  }
-  .lobe-chip .color-dot{
-    width:12px;
-    height:12px;
-    border-radius:50%;
-    flex-shrink:0;
-  }
-  .lobe-chip:hover{
-    color:#fff;
-    border-color:var(--amber-dim);
-    background:rgba(224,164,88,.12);
-    transform:translateX(-5px);
-  }
-  .lobe-chip.active{
-    color:var(--amber);
-    border-color:var(--amber);
-    background:rgba(224,164,88,.18);
-    box-shadow:0 0 30px rgba(224,164,88,0.06);
-  }
+    canvas {
+      display: block;
+      outline: none;
+      width: 100%;
+      height: 100%;
+    }
 
-  /* ====== التحكم في اللون ====== */
-  #color-control{
-    position:absolute; bottom:26px; left:50%; transform:translateX(-50%);
-    z-index:10;
-    display:flex;
-    gap:8px;
-    align-items:center;
-    flex-wrap:wrap;
-    justify-content:center;
-    background:rgba(17,21,31,.92);
-    backdrop-filter:blur(12px);
-    padding:10px 18px;
-    border-radius:14px;
-    border:1px solid var(--line);
-  }
-  #color-control label{font-size:12px; color:var(--ink-dim);}
-  #color-control input[type="color"]{
-    width:34px; height:34px;
-    border:2px solid var(--line);
-    border-radius:6px;
-    cursor:pointer;
-    background:transparent;
-    padding:2px;
-  }
-  #color-control input[type="color"]::-webkit-color-swatch-wrapper{padding:0;}
-  #color-control input[type="color"]::-webkit-color-swatch{border:none; border-radius:4px;}
-  .color-presets{display:flex; gap:4px;}
-  .color-preset{
-    width:24px; height:24px;
-    border-radius:50%;
-    border:2px solid transparent;
-    cursor:pointer;
-    transition:all .2s ease;
-  }
-  .color-preset:hover{transform:scale(1.15); border-color:var(--amber);}
-  .color-preset.active{border-color:var(--amber);}
-  #rebuild-btn{
-    background:rgba(95,212,208,.15);
-    border:1px solid var(--cyan);
-    color:var(--cyan);
-    padding:4px 14px;
-    border-radius:6px;
-    font-size:12px;
-    font-weight:700;
-    cursor:pointer;
-    transition:all .2s ease;
-    font-family:'Tajawal', sans-serif;
-  }
-  #rebuild-btn:hover{background:rgba(95,212,208,.25);}
+    /* ====== اللوجو ====== */
+    .header {
+      position: relative;
+      z-index: 20;
+      background: #fff;
+      padding: 10px;
+    }
 
-  #hint{
-    position:absolute; bottom:26px; left:26px; z-index:10;
-    font-size:11px; color:#5c6478; max-width:200px; line-height:1.8;
-  }
-
-  #reset-view{
-    position:absolute; top:22px; left:26px; z-index:10;
-    font-family:'JetBrains Mono', monospace; font-size:11px;
-    padding:8px 14px; border-radius:8px;
-    border:1px solid var(--line); background:rgba(17,21,31,.7);
-    color:var(--ink-dim); cursor:pointer; backdrop-filter:blur(4px);
-  }
-  #reset-view:hover{color:var(--amber); border-color:var(--amber-dim);}
-
-  ::-webkit-scrollbar{width:4px;}
-  ::-webkit-scrollbar-thumb{background:var(--line); border-radius:2px;}
-
-  @media (max-width: 640px){
-    #color-control{bottom:80px; width:92%; padding:8px 12px; gap:5px;}
-    #lobe-list{bottom:145px; right:10px; max-width:160px;}
-    .lobe-chip{font-size:12px; padding:6px 12px;}
-    #panel{width:100%;}
-    #panel .title-row h3{font-size:19px;}
-    #active-marker{width:30px; height:30px; margin:-15px 0 0 -15px;}
-    #active-marker .marker-label{font-size:11px; padding:4px 10px; top:34px;}
-    #active-marker .marker-ring{inset:-6px; border-width:2px;}
-  }
-
-  .header {
-    position: relative;
-    z-index: 1;
-    padding: 30px;
-    color: black;
-    background: #fff;
-
-    img {
-      width: 250px;
+    .header img {
+      width: 200px;
       display: block;
       margin: auto;
     }
-  }
-</style>
+
+    #loader {
+      position: absolute;
+      inset: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(ellipse at 50% 30%, rgba(95, 212, 208, 0.07), transparent 60%), var(--bg-0);
+    }
+
+    #loader-card {
+      text-align: center;
+      padding: 40px 34px;
+    }
+
+    .loader-spinner {
+      width: 50px;
+      height: 50px;
+      border: 3px solid var(--line);
+      border-top-color: var(--amber);
+      border-radius: 50%;
+      margin: 0 auto 20px;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    #loader-card h2 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    #loader-card p {
+      font-size: 13px;
+      color: var(--ink-dim);
+    }
+
+    /* ====== النقطة الثابتة ====== */
+    #active-marker {
+      position: absolute;
+      width: 44px;
+      height: 44px;
+      margin: -22px 0 0 -22px;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 7;
+      display: none;
+    }
+
+    #active-marker .marker-ring {
+      position: absolute;
+      inset: -10px;
+      border-radius: 50%;
+      border: 3px solid var(--amber);
+      animation: marker-pulse 1.5s ease-in-out infinite;
+    }
+
+    #active-marker .marker-dot {
+      position: absolute;
+      inset: 5px;
+      border-radius: 50%;
+      background: var(--amber);
+      box-shadow: 0 0 50px rgba(224, 164, 88, 0.9);
+    }
+
+    #active-marker .marker-label {
+      position: absolute;
+      top: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(7, 9, 13, 0.92);
+      backdrop-filter: blur(12px);
+      padding: 6px 16px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+      white-space: nowrap;
+      border: 1px solid var(--amber);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    @keyframes marker-pulse {
+
+      0%,
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+
+      50% {
+        transform: scale(1.8);
+        opacity: 0;
+      }
+    }
+
+    /* ====== لوحة المعلومات - POPUP ====== */
+    #panel-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 19;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.3s ease;
+    }
+
+    #panel-overlay.open {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      0% {
+        opacity: 0;
+      }
+
+      100% {
+        opacity: 1;
+      }
+    }
+
+    #panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 40px 36px 32px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      position: relative;
+      animation: slideUp 0.4s cubic-bezier(.2, .8, .2, 1);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+    }
+
+    @keyframes slideUp {
+      0% {
+        transform: translateY(30px) scale(0.95);
+        opacity: 0;
+      }
+
+      100% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+      }
+    }
+
+    #panel .tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      letter-spacing: .12em;
+      color: var(--cyan);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    #panel .title-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    #panel .title-row h3 {
+      font-size: 24px;
+      font-weight: 900;
+      line-height: 1.4;
+      flex: 1;
+    }
+
+    #panel .speaker-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 2px solid var(--amber-dim);
+      background: transparent;
+      color: var(--amber);
+      font-size: 22px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    #panel .speaker-btn:hover {
+      background: rgba(224, 164, 88, 0.15);
+      border-color: var(--amber);
+      transform: scale(1.1);
+    }
+
+    #panel .speaker-btn.speaking {
+      border-color: var(--cyan);
+      color: var(--cyan);
+      animation: speak-pulse 0.5s ease-in-out infinite alternate;
+    }
+
+    @keyframes speak-pulse {
+      0% {
+        transform: scale(1);
+      }
+
+      100% {
+        transform: scale(1.1);
+      }
+    }
+
+    #panel .desc {
+      font-size: 15px;
+      line-height: 2.1;
+      color: #c3c9d6;
+    }
+
+    #panel .close {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1px solid var(--line);
+      background: transparent;
+      color: var(--ink-dim);
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    #panel .close:hover {
+      border-color: var(--amber);
+      color: var(--amber);
+      background: rgba(224, 164, 88, .1);
+    }
+
+    /* ====== قائمة الفصوص ====== */
+    #lobe-list {
+      position: absolute;
+      bottom: 26px;
+      right: 26px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      z-index: 10;
+      max-width: 220px;
+    }
+
+    .lobe-chip {
+      font-family: 'Tajawal', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--ink-dim);
+      background: rgba(17, 21, 31, .88);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 16px;
+      cursor: pointer;
+      text-align: right;
+      transition: all .25s ease;
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .lobe-chip .color-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .lobe-chip:hover {
+      color: #fff;
+      border-color: var(--amber-dim);
+      background: rgba(224, 164, 88, .12);
+      transform: translateX(-5px);
+    }
+
+    .lobe-chip.active {
+      color: var(--amber);
+      border-color: var(--amber);
+      background: rgba(224, 164, 88, .18);
+      box-shadow: 0 0 30px rgba(224, 164, 88, 0.06);
+    }
+
+    /* ====== التحكم في اللون - عمودي على اليمين ====== */
+    #color-control {
+      position: absolute;
+      top: 50%;
+      right: 20px;
+      transform: translateY(-50%);
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      background: rgba(17, 21, 31, .92);
+      backdrop-filter: blur(12px);
+      padding: 14px 10px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+    }
+
+    #color-control label {
+      font-size: 11px;
+      color: var(--ink-dim);
+      writing-mode: vertical-lr;
+      letter-spacing: 2px;
+      margin-bottom: 4px;
+    }
+
+    #color-control input[type="color"] {
+      width: 34px;
+      height: 34px;
+      border: 2px solid var(--line);
+      border-radius: 8px;
+      cursor: pointer;
+      background: transparent;
+      padding: 2px;
+    }
+
+    #color-control input[type="color"]::-webkit-color-swatch-wrapper {
+      padding: 0;
+    }
+
+    #color-control input[type="color"]::-webkit-color-swatch {
+      border: none;
+      border-radius: 5px;
+    }
+
+    .color-presets {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .color-preset {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: all .2s ease;
+    }
+
+    .color-preset:hover {
+      transform: scale(1.15);
+      border-color: var(--amber);
+    }
+
+    .color-preset.active {
+      border-color: var(--amber);
+      box-shadow: 0 0 12px rgba(224, 164, 88, .3);
+    }
+
+    #hint {
+      position: absolute;
+      bottom: 26px;
+      left: 26px;
+      z-index: 10;
+      font-size: 11px;
+      color: #5c6478;
+      max-width: 200px;
+      line-height: 1.8;
+    }
+
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--line);
+      border-radius: 2px;
+    }
+
+    /* ====== RESPONSIVE - الشاشات الصغيرة ====== */
+    @media (max-width: 768px) {
+
+      /* قائمة الفصوص تحت على اليمين بشكل أفقي */
+      #lobe-list {
+        width: 100%;
+        bottom: 20px;
+        right: 50%;
+        transform: translateX(50%);
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        max-width: 95%;
+        gap: 6px;
+        background: rgba(17, 21, 31, .85);
+        backdrop-filter: blur(12px);
+        padding: 10px 14px;
+        border-radius: 16px;
+        border: 1px solid var(--line);
+      }
+
+      .lobe-chip {
+        font-size: 12px;
+        padding: 6px 12px;
+        background: rgba(17, 21, 31, .6);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        white-space: nowrap;
+      }
+
+      .lobe-chip .color-dot {
+        width: 8px;
+        height: 8px;
+      }
+
+      .lobe-chip:hover {
+        transform: translateY(-2px);
+      }
+
+      /* إخفاء الـ hint في الشاشات الصغيرة */
+      #hint {
+        display: none;
+      }
+
+      /* تصغير أدوات التحكم في اللون */
+      #color-control {
+        right: 8px;
+        padding: 10px 6px;
+      }
+
+      #color-control input[type="color"] {
+        width: 28px;
+        height: 28px;
+      }
+
+      .color-preset {
+        width: 22px;
+        height: 22px;
+      }
+
+      #panel {
+        width: 95%;
+        padding: 30px 20px 24px;
+      }
+
+      #panel .title-row h3 {
+        font-size: 19px;
+      }
+
+      #active-marker {
+        width: 32px;
+        height: 32px;
+        margin: -16px 0 0 -16px;
+      }
+
+      #active-marker .marker-label {
+        font-size: 11px;
+        padding: 4px 10px;
+        top: 38px;
+      }
+
+      #active-marker .marker-ring {
+        inset: -6px;
+        border-width: 2px;
+      }
+
+      .header img {
+        width: 200px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      #lobe-list {
+        bottom: 16px;
+        padding: 8px 10px;
+        gap: 4px;
+      }
+
+      .lobe-chip {
+        font-size: 10px;
+        padding: 4px 8px;
+        gap: 4px;
+      }
+
+      .lobe-chip .color-dot {
+        width: 6px;
+        height: 6px;
+      }
+
+      #color-control {
+        right: 4px;
+        padding: 8px 4px;
+        gap: 4px;
+      }
+
+      #color-control input[type="color"] {
+        width: 24px;
+        height: 24px;
+      }
+
+      .color-preset {
+        width: 18px;
+        height: 18px;
+      }
+
+      .header img {
+        width: 150px;
+      }
+    }
+  </style>
 </head>
+
 <body>
-<div id="app">
+  <div id="app">
 
-  <section class="header">
-    <img src="images.jpg" alt="Brain Icon">
-  </section>
-
-  <div id="loader">
-    <div id="loader-card">
-      <div class="loader-spinner"></div>
-      <h2>جاري تحميل المخ</h2>
-      <p id="loader-status">جارِ تحميل الموديل ثلاثي الأبعاد…</p>
+    <!-- اللوجو -->
+    <div class="header" id="header-logo">
+      <img src="images.jpg" alt="Brain Icon">
     </div>
-  </div>
 
-  <div id="canvas-holder"></div>
-
-  <!-- النقطة الثابتة الوحيدة -->
-  <div id="active-marker">
-    <div class="marker-ring"></div>
-    <div class="marker-dot"></div>
-    <div class="marker-label" id="marker-label">🧠 الفص الجبهي</div>
-  </div>
-
-  <button id="reset-view">إعادة ضبط</button>
-
-  <div id="hint">🖱️ اسحب لتدوير · عجلة للتكبير<br>👆 اضغط على اسم الفص في القائمة</div>
-
-  <div id="color-control">
-    <label>🎨</label>
-    <input type="color" id="brain-color" value="#c97878">
-    <div class="color-presets">
-      <div class="color-preset active" style="background:#c97878;" data-color="#c97878"></div>
-      <div class="color-preset" style="background:#8B8B8B;" data-color="#8B8B8B"></div>
-      <div class="color-preset" style="background:#FF6B6B;" data-color="#FF6B6B"></div>
-      <div class="color-preset" style="background:#4ECDC4;" data-color="#4ECDC4"></div>
-      <div class="color-preset" style="background:#FFE66D;" data-color="#FFE66D"></div>
-      <div class="color-preset" style="background:#A8E6CF;" data-color="#A8E6CF"></div>
+    <div id="loader">
+      <div id="loader-card">
+        <div class="loader-spinner"></div>
+        <h2>جاري تحميل المخ</h2>
+        <p id="loader-status">جارِ تحميل الموديل ثلاثي الأبعاد…</p>
+      </div>
     </div>
-    <button id="rebuild-btn">🔄 تطبيق</button>
-  </div>
 
-  <div id="lobe-list"></div>
+    <div id="canvas-holder"></div>
 
-  <div id="panel">
-    <button class="close">✕</button>
-    <div class="tag" id="panel-tag">الفص المختار</div>
-    <div class="title-row">
-      <h3 id="panel-title">—</h3>
-      <button class="speaker-btn" id="speaker-btn" title="استماع للنص">🔊</button>
+    <!-- النقطة الثابتة -->
+    <div id="active-marker">
+      <div class="marker-ring"></div>
+      <div class="marker-dot"></div>
+      <div class="marker-label" id="marker-label">🧠 الفص الجبهي</div>
     </div>
-    <div class="desc" id="panel-desc">—</div>
+
+
+    <!-- لوحة المعلومات - POPUP -->
+    <div id="panel-overlay">
+      <div id="panel">
+        <button class="close" id="panel-close">✕</button>
+        <div class="tag" id="panel-tag">الفص المختار</div>
+        <div class="title-row">
+          <h3 id="panel-title">—</h3>
+          <button class="speaker-btn" id="speaker-btn" title="استماع للنص">🔊</button>
+        </div>
+        <div class="desc" id="panel-desc">—</div>
+      </div>
+    </div>
+
+    <!-- قائمة الفصوص -->
+    <div id="lobe-list"></div>
+
+    <!-- التحكم في اللون - عمودي -->
+    <div id="color-control">
+      <label>🎨 لون</label>
+      <input type="color" id="brain-color" value="#c97878">
+      <div class="color-presets">
+        <div class="color-preset active" style="background:#c97878;" data-color="#c97878"></div>
+        <div class="color-preset" style="background:#8B8B8B;" data-color="#8B8B8B"></div>
+        <div class="color-preset" style="background:#FF6B6B;" data-color="#FF6B6B"></div>
+        <div class="color-preset" style="background:#4ECDC4;" data-color="#4ECDC4"></div>
+        <div class="color-preset" style="background:#FFE66D;" data-color="#FFE66D"></div>
+        <div class="color-preset" style="background:#A8E6CF;" data-color="#A8E6CF"></div>
+      </div>
+    </div>
+
   </div>
 
-</div>
-
-<script type="importmap">
-{
-  "imports": {
-    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
-  }
-}
-</script>
-
-<script type="module">
-import * as THREE from "three";
-import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
-
-// ============================================================
-// بيانات الفصوص الأربعة
-// ============================================================
-const LOBES = [
-  {
-    id: "frontal",
-    title: "الفص الجبهي",
-    subtitle: "Frontal Lobe",
-    desc: "يقع في مقدمة المخ خلف الجبهة مباشرة. مسؤول عن الوظائف العليا مثل التفكير، التخطيط، اتخاذ القرارات، الشخصية، والتحكم في الحركات الإرادية. يحتوي على منطقة بروكا المسؤولة عن إنتاج الكلام.",
-    position: { x: 0, y: 28, z: 82 },
-    color: "#FF6B6B",
-    icon: "🧠"
-  },
-  {
-    id: "parietal",
-    title: "الفص الجداري",
-    subtitle: "Parietal Lobe",
-    desc: "يقع في الجزء العلوي من المخ. مسؤول عن معالجة المعلومات الحسية مثل اللمس، الألم، الحرارة، والضغط. يلعب دوراً هاماً في الإدراك المكاني والتنسيق بين الحواس.",
-    position: { x: 0, y: 62, z: 18 },
-    color: "#4ECDC4",
-    icon: "🎯"
-  },
-  {
-    id: "temporal",
-    title: "الفص الصدغي",
-    subtitle: "Temporal Lobe",
-    desc: "يقع على جانبي المخ أسفل الفصوص الجبهية والجدارية. مسؤول عن معالجة المعلومات السمعية، الذاكرة طويلة المدى، فهم اللغة (منطقة فيرنيكه)، والتعرف على الوجوه والأشياء.",
-    position: { x: 48, y: -18, z: 18 },
-    color: "#FFE66D",
-    icon: "👂"
-  },
-  {
-    id: "occipital",
-    title: "الفص القذالي",
-    subtitle: "Occipital Lobe",
-    desc: "يقع في الجزء الخلفي من المخ. هو المركز الرئيسي لمعالجة المعلومات البصرية في الدماغ. يستقبل الإشارات من العينين ويفسرها لتكوين الصور التي نراها.",
-    position: { x: 0, y: 28, z: -42 },
-    color: "#A8E6CF",
-    icon: "👁️"
-  }
-];
-
-/* ============================================================
-   إعداد المشهد
-   ============================================================ */
-const holder = document.getElementById("canvas-holder");
-const scene = new THREE.Scene();
-
-const camera = new THREE.PerspectiveCamera(42, window.innerWidth/window.innerHeight, 0.1, 5000);
-camera.position.set(0, 20, 250);
-
-const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.outputColorSpace = THREE.SRGBColorSpace;
-holder.appendChild(renderer.domElement);
-
-// إضاءة
-scene.add(new THREE.AmbientLight(0xffffff, 1.8));
-
-const mainLight = new THREE.DirectionalLight(0xffffff, 3.0);
-mainLight.position.set(120, 180, 220);
-scene.add(mainLight);
-
-const fillLight = new THREE.DirectionalLight(0xffffff, 1.8);
-fillLight.position.set(-180, -60, -180);
-scene.add(fillLight);
-
-const backLight = new THREE.DirectionalLight(0xffffff, 1.2);
-backLight.position.set(0, 0, -250);
-scene.add(backLight);
-
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true;
-controls.dampingFactor = 0.08;
-controls.minDistance = 60;
-controls.maxDistance = 700;
-controls.target.set(0, -5, 0);
-controls.update();
-
-let brainGroup = new THREE.Group();
-scene.add(brainGroup);
-
-let modelRadius = 100;
-let brainMeshes = [];
-
-// عناصر الواجهة
-const panel = document.getElementById("panel");
-const panelTitle = document.getElementById("panel-title");
-const panelDesc = document.getElementById("panel-desc");
-const panelTag = document.getElementById("panel-tag");
-const lobeListEl = document.getElementById("lobe-list");
-const loader = document.getElementById("loader");
-const loaderStatus = document.getElementById("loader-status");
-const colorPicker = document.getElementById("brain-color");
-const colorPresets = document.querySelectorAll(".color-preset");
-const rebuildBtn = document.getElementById("rebuild-btn");
-const marker = document.getElementById("active-marker");
-const markerLabel = document.getElementById("marker-label");
-const speakerBtn = document.getElementById("speaker-btn");
-
-let selectedId = null;
-let speechSynth = window.speechSynthesis;
-let isSpeaking = false;
-let currentUtterance = null;
-
-/* ============================================================
-   تغيير لون المخ
-   ============================================================ */
-function setBrainColor(colorHex) {
-  const color = new THREE.Color(colorHex);
-  
-  brainMeshes.forEach(mesh => {
-    if (!mesh || !mesh.material) return;
-    const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-    materials.forEach(mat => {
-      if (mat && mat.color) {
-        mat.color.copy(color);
-        mat.needsUpdate = true;
-      }
-    });
-  });
-  
-  colorPicker.value = colorHex;
-  colorPresets.forEach(p => p.classList.toggle('active', p.dataset.color === colorHex));
-}
-
-function rebuildBrainMaterials(colorHex) {
-  const color = new THREE.Color(colorHex);
-  
-  brainMeshes.forEach(mesh => {
-    if (!mesh || !mesh.geometry) return;
-    
-    const newMaterial = new THREE.MeshStandardMaterial({
-      color: color,
-      roughness: 0.7,
-      metalness: 0.0,
-      side: THREE.DoubleSide,
-      transparent: false,
-      opacity: 1.0,
-      envMap: null,
-      envMapIntensity: 0
-    });
-    
-    if (mesh.material) {
-      if (Array.isArray(mesh.material)) {
-        mesh.material.forEach(m => { if (m.dispose) m.dispose(); });
-      } else {
-        if (mesh.material.dispose) mesh.material.dispose();
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
       }
     }
-    
-    mesh.material = newMaterial;
-    mesh.material.needsUpdate = true;
-  });
-  
-  colorPicker.value = colorHex;
-  colorPresets.forEach(p => p.classList.toggle('active', p.dataset.color === colorHex));
-}
+  </script>
 
-/* ============================================================
-   اختيار فص
-   ============================================================ */
-function selectLobe(id) {
-  const lobe = LOBES.find(l => l.id === id);
-  if (!lobe) return;
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
-  selectedId = id;
+    // ============================================================
+    // بيانات الفصوص الأربعة
+    // ============================================================
+    const LOBES = [
+      {
+        id: "frontal",
+        title: "الفص الجبهي",
+        subtitle: "Frontal Lobe",
+        desc: "يقع في مقدمة المخ خلف الجبهة مباشرة. مسؤول عن الوظائف العليا مثل التفكير، التخطيط، اتخاذ القرارات، الشخصية، والتحكم في الحركات الإرادية. يحتوي على منطقة بروكا المسؤولة عن إنتاج الكلام.",
+        position: { x: 3, y: 60, z: -82 },
+        color: "#FF6B6B",
+        icon: "🧠"
+      },
+      {
+        id: "parietal",
+        title: "الفص الجداري",
+        subtitle: "Parietal Lobe",
+        desc: "يقع في الجزء العلوي من المخ. مسؤول عن معالجة المعلومات الحسية مثل اللمس، الألم، الحرارة، والضغط. يلعب دوراً هاماً في الإدراك المكاني والتنسيق بين الحواس.",
+        position: { x: 0, y: 62, z: 18 },
+        color: "#4ECDC4",
+        icon: "🎯"
+      },
+      {
+        id: "temporal",
+        title: "الفص الصدغي",
+        subtitle: "Temporal Lobe",
+        desc: "يقع على جانبي المخ أسفل الفصوص الجبهية والجدارية. مسؤول عن معالجة المعلومات السمعية، الذاكرة طويلة المدى، فهم اللغة (منطقة فيرنيكه)، والتعرف على الوجوه والأشياء.",
+        position: { x: 0, y: -18, z: 18 },
+        color: "#FFE66D",
+        icon: "👂"
+      },
+      {
+        id: "occipital",
+        title: "الفص القذالي",
+        subtitle: "Occipital Lobe",
+        desc: "يقع في الجزء الخلفي من المخ. هو المركز الرئيسي لمعالجة المعلومات البصرية في الدماغ. يستقبل الإشارات من العينين ويفسرها لتكوين الصور التي نراها.",
+        position: { x: 0, y: 10, z: 42 },
+        color: "#A8E6CF",
+        icon: "👁️"
+      }
+    ];
 
-  // تحديث القائمة
-  document.querySelectorAll(".lobe-chip").forEach(el => {
-    el.classList.toggle("active", el.dataset.id === id);
-  });
+    /* ============================================================
+       إعداد المشهد
+       ============================================================ */
+    const holder = document.getElementById("canvas-holder");
+    const scene = new THREE.Scene();
 
-  // إظهار النقطة الثابتة
-  const worldPos = new THREE.Vector3(lobe.position.x, lobe.position.y, lobe.position.z);
-  markerLabel.textContent = lobe.icon + " " + lobe.title;
-  marker.style.display = "block";
-  updateMarkerPosition(worldPos);
+    const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 5000);
+    camera.position.set(0, 20, 250);
 
-  // عرض المعلومات
-  panelTag.textContent = "🧠 " + lobe.subtitle;
-  panelTitle.textContent = lobe.icon + " " + lobe.title;
-  panelDesc.textContent = lobe.desc;
-  panel.classList.add("open");
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    holder.appendChild(renderer.domElement);
 
-  // إيقاف القراءة إذا كانت شغالة
-  if (isSpeaking) {
-    speechSynth.cancel();
-    isSpeaking = false;
-    speakerBtn.classList.remove("speaking");
-    speakerBtn.textContent = "🔊";
-  }
+    // إضاءة
+    scene.add(new THREE.AmbientLight(0xffffff, 1.8));
 
-  // تحريك الكاميرا
-  const dir = worldPos.clone().normalize();
-  const dist = camera.position.distanceTo(controls.target);
-  const targetCamPos = worldPos.clone().add(dir.clone().multiplyScalar(dist * 0.55));
-  animateCamera(targetCamPos, worldPos.clone().multiplyScalar(0.15));
-}
+    const mainLight = new THREE.DirectionalLight(0xffffff, 3.0);
+    mainLight.position.set(120, 180, 220);
+    scene.add(mainLight);
 
-/* ============================================================
-   تحديث موقع النقطة الثابتة
-   ============================================================ */
-function updateMarkerPosition(worldPos) {
-  const projected = worldPos.clone().project(camera);
-  const x = (projected.x * 0.5 + 0.5) * window.innerWidth;
-  const y = (-projected.y * 0.5 + 0.5) * window.innerHeight;
-  
-  // النقطة تظهر فقط إذا كانت أمام الكاميرا
-  if (projected.z < 1 && projected.z > -1) {
-    marker.style.left = x + "px";
-    marker.style.top = y + "px";
-    marker.style.display = "block";
-  } else {
-    marker.style.display = "none";
-  }
-}
+    const fillLight = new THREE.DirectionalLight(0xffffff, 1.8);
+    fillLight.position.set(-180, -60, -180);
+    scene.add(fillLight);
 
-/* ============================================================
-   تحريك الكاميرا
-   ============================================================ */
-let camAnim = null;
-function animateCamera(toPos, toTarget) {
-  if (camAnim) cancelAnimationFrame(camAnim);
-  const fromPos = camera.position.clone();
-  const fromTarget = controls.target.clone();
-  const start = performance.now();
-  const dur = 700;
-  
-  function step(t) {
-    const p = Math.min(1, (t - start) / dur);
-    const e = 1 - Math.pow(1 - p, 3);
-    camera.position.lerpVectors(fromPos, toPos, e);
-    controls.target.lerpVectors(fromTarget, toTarget, e);
+    const backLight = new THREE.DirectionalLight(0xffffff, 1.2);
+    backLight.position.set(0, 0, -250);
+    scene.add(backLight);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+    controls.minDistance = 60;
+    controls.maxDistance = 700;
+    controls.target.set(0, -5, 0);
     controls.update();
-    if (p < 1) camAnim = requestAnimationFrame(step);
-  }
-  camAnim = requestAnimationFrame(step);
-}
 
-/* ============================================================
-   قراءة النص - زر السماعة (مع إصلاح الصوت)
-   ============================================================ */
-function speakText(text) {
-  if (!window.speechSynthesis) {
-    alert("المتصفح لا يدعم خاصية القراءة الصوتية");
-    return;
-  }
-
-  // إيقاف القراءة الحالية
-  if (isSpeaking) {
-    speechSynth.cancel();
-    isSpeaking = false;
-    speakerBtn.classList.remove("speaking");
-    speakerBtn.textContent = "🔊";
-    return;
-  }
-
-  // تجهيز النص للقراءة
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = "ar-SA";
-  utterance.rate = 0.85;
-  utterance.pitch = 1;
-  utterance.volume = 1;
-
-  // محاولة العثور على صوت عربي
-  let voices = speechSynth.getVoices();
-  if (voices.length === 0) {
-    // لو مفيش أصوات، ننتظر تحميلها
-    speechSynth.onvoiceschanged = () => {
-      voices = speechSynth.getVoices();
-      const arabicVoice = voices.find(v => v.lang.startsWith("ar"));
-      if (arabicVoice) utterance.voice = arabicVoice;
-      speechSynth.speak(utterance);
-    };
-    speechSynth.speak(utterance);
-    return;
-  }
-
-  const arabicVoice = voices.find(v => v.lang.startsWith("ar"));
-  if (arabicVoice) {
-    utterance.voice = arabicVoice;
-  }
-
-  currentUtterance = utterance;
-
-  utterance.onstart = () => {
-    isSpeaking = true;
-    speakerBtn.classList.add("speaking");
-    speakerBtn.textContent = "⏹️";
-  };
-
-  utterance.onend = () => {
-    isSpeaking = false;
-    speakerBtn.classList.remove("speaking");
-    speakerBtn.textContent = "🔊";
-    currentUtterance = null;
-  };
-
-  utterance.onerror = () => {
-    isSpeaking = false;
-    speakerBtn.classList.remove("speaking");
-    speakerBtn.textContent = "🔊";
-    currentUtterance = null;
-  };
-
-  speechSynth.speak(utterance);
-}
-
-/* ============================================================
-   بناء القائمة الجانبية
-   ============================================================ */
-function buildLobeList() {
-  lobeListEl.innerHTML = "";
-  LOBES.forEach((lobe) => {
-    const chip = document.createElement("div");
-    chip.className = "lobe-chip";
-    chip.dataset.id = lobe.id;
-    chip.innerHTML = `
-      <span class="color-dot" style="background:${lobe.color};"></span>
-      ${lobe.icon} ${lobe.title}
-    `;
-    chip.addEventListener("click", () => selectLobe(lobe.id));
-    lobeListEl.appendChild(chip);
-  });
-}
-
-/* ============================================================
-   تحميل الموديل
-   ============================================================ */
-function loadModel() {
-  loaderStatus.textContent = "جارِ تحميل الموديل…";
-  const loaderGLTF = new GLTFLoader();
-  
-  loaderGLTF.load(
-    "brain.glb",
-    (gltf) => {
-      loaderStatus.textContent = "تم التحميل! جاري التجهيز…";
-      setTimeout(() => onModelLoaded(gltf), 300);
-    },
-    (xhr) => {
-      if (xhr.lengthComputable) {
-        const pct = Math.round((xhr.loaded / xhr.total) * 100);
-        loaderStatus.textContent = `جارِ التحميل… ${pct}%`;
+    // ============================================================
+    // إخفاء النقطة عند تحريك المخ
+    // ============================================================
+    controls.addEventListener('start', () => {
+      if (isMarkerVisible) {
+        isMarkerVisible = false;
+        marker.style.display = "none";
+        document.querySelectorAll(".lobe-chip").forEach(el => el.classList.remove("active"));
+        selectedId = null;
+        // نغلق البوب اب لو مفتوح
+        panelOverlay.classList.remove("open");
+        if (isSpeaking) {
+          speechSynth.cancel();
+          isSpeaking = false;
+          speakerBtn.classList.remove("speaking");
+          speakerBtn.textContent = "🔊";
+        }
       }
-    },
-    (err) => {
-      console.error(err);
-      loaderStatus.textContent = "⚠️ لم يتم العثور على ملف brain.glb";
-      loaderStatus.style.color = "var(--danger)";
+    });
+
+    let brainGroup = new THREE.Group();
+    scene.add(brainGroup);
+
+    let modelRadius = 100;
+    let brainMeshes = [];
+    let modelCenter = new THREE.Vector3();
+    let brainScale = 1;
+
+    // عناصر الواجهة
+    const panelOverlay = document.getElementById("panel-overlay");
+    const panelTitle = document.getElementById("panel-title");
+    const panelDesc = document.getElementById("panel-desc");
+    const panelTag = document.getElementById("panel-tag");
+    const panelClose = document.getElementById("panel-close");
+    const lobeListEl = document.getElementById("lobe-list");
+    const loader = document.getElementById("loader");
+    const loaderStatus = document.getElementById("loader-status");
+    const colorPicker = document.getElementById("brain-color");
+    const colorPresets = document.querySelectorAll(".color-preset");
+    const marker = document.getElementById("active-marker");
+    const markerLabel = document.getElementById("marker-label");
+    const speakerBtn = document.getElementById("speaker-btn");
+    const headerLogo = document.getElementById("header-logo");
+
+    let selectedId = null;
+    let isMarkerVisible = false;
+    let speechSynth = window.speechSynthesis;
+    let isSpeaking = false;
+    let currentUtterance = null;
+    let markerWorldPos = new THREE.Vector3();
+
+    /* ============================================================
+       تغيير لون المخ
+       ============================================================ */
+    function setBrainColor(colorHex) {
+      const color = new THREE.Color(colorHex);
+
+      brainMeshes.forEach(mesh => {
+        if (!mesh || !mesh.material) return;
+        const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+        materials.forEach(mat => {
+          if (mat && mat.color) {
+            mat.color.copy(color);
+            mat.needsUpdate = true;
+          }
+        });
+      });
+
+      colorPicker.value = colorHex;
+      colorPresets.forEach(p => p.classList.toggle('active', p.dataset.color === colorHex));
     }
-  );
-}
 
-function onModelLoaded(gltf) {
-  const model = gltf.scene;
+    function rebuildBrainMaterials(colorHex) {
+      const color = new THREE.Color(colorHex);
 
-  // حساب الحجم
-  const box = new THREE.Box3().setFromObject(model);
-  const size = new THREE.Vector3();
-  box.getSize(size);
-  modelRadius = Math.max(size.x, size.y, size.z) / 2;
+      brainMeshes.forEach(mesh => {
+        if (!mesh || !mesh.geometry) return;
 
-  const center = new THREE.Vector3();
-  box.getCenter(center);
-  model.position.sub(center);
+        const newMaterial = new THREE.MeshStandardMaterial({
+          color: color,
+          roughness: 0.7,
+          metalness: 0.0,
+          side: THREE.DoubleSide,
+          transparent: false,
+          opacity: 1.0,
+          envMap: null,
+          envMapIntensity: 0
+        });
 
-  // جمع الـ Meshes
-  brainMeshes = [];
-  model.traverse((child) => {
-    if (child.isMesh) {
-      child.castShadow = false;
-      child.receiveShadow = false;
-      brainMeshes.push(child);
+        if (mesh.material) {
+          if (Array.isArray(mesh.material)) {
+            mesh.material.forEach(m => { if (m.dispose) m.dispose(); });
+          } else {
+            if (mesh.material.dispose) mesh.material.dispose();
+          }
+        }
+
+        mesh.material = newMaterial;
+        mesh.material.needsUpdate = true;
+      });
+
+      colorPicker.value = colorHex;
+      colorPresets.forEach(p => p.classList.toggle('active', p.dataset.color === colorHex));
     }
-  });
 
-  console.log(`✅ تم العثور على ${brainMeshes.length} قطعة`);
+    /* ============================================================
+       اختيار فص - Toggle
+       ============================================================ */
+    function selectLobe(id) {
+      const lobe = LOBES.find(l => l.id === id);
+      if (!lobe) return;
 
-  // تطبيق اللون
-  rebuildBrainMaterials("#c97878");
+      if (selectedId === id && isMarkerVisible) {
+        isMarkerVisible = false;
+        marker.style.display = "none";
+        document.querySelectorAll(".lobe-chip").forEach(el => el.classList.remove("active"));
+        selectedId = null;
+        panelOverlay.classList.remove("open");
+        if (isSpeaking) {
+          speechSynth.cancel();
+          isSpeaking = false;
+          speakerBtn.classList.remove("speaking");
+          speakerBtn.textContent = "🔊";
+        }
+        return;
+      }
 
-  brainGroup.add(model);
+      selectedId = id;
+      isMarkerVisible = true;
 
-  // ضبط الكاميرا
-  const dist = modelRadius * 2.6;
-  camera.position.set(dist * 0.15, dist * 0.2, dist * 0.95);
-  controls.target.set(0, -modelRadius * 0.1, 0);
-  controls.minDistance = modelRadius * 0.7;
-  controls.maxDistance = modelRadius * 6;
-  controls.update();
+      document.querySelectorAll(".lobe-chip").forEach(el => {
+        el.classList.toggle("active", el.dataset.id === id);
+      });
 
-  // بناء القائمة
-  buildLobeList();
+      markerWorldPos.set(
+        (lobe.position.x - modelCenter.x) * brainScale,
+        (lobe.position.y - modelCenter.y) * brainScale,
+        (lobe.position.z - modelCenter.z) * brainScale
+      );
 
-  // اختيار الفص الجبهي افتراضياً
-  setTimeout(() => {
-    selectLobe("frontal");
-  }, 500);
+      markerLabel.textContent = lobe.icon + " " + lobe.title;
+      marker.style.display = "block";
+      updateMarkerPosition(markerWorldPos);
 
-  // إخفاء شاشة التحميل
-  loader.style.transition = "opacity 0.5s ease";
-  loader.style.opacity = "0";
-  setTimeout(() => {
-    loader.style.display = "none";
-  }, 500);
-}
+      panelTag.textContent = "🧠 " + lobe.subtitle;
+      panelTitle.textContent = lobe.icon + " " + lobe.title;
+      panelDesc.textContent = lobe.desc;
+      panelOverlay.classList.add("open");
 
-/* ============================================================
-   Animation Loop
-   ============================================================ */
-function animate() {
-  requestAnimationFrame(animate);
-  controls.update();
-  
-  // تحديث موقع النقطة الثابتة
-  if (selectedId && marker.style.display !== "none") {
-    const lobe = LOBES.find(l => l.id === selectedId);
-    if (lobe) {
-      const worldPos = new THREE.Vector3(lobe.position.x, lobe.position.y, lobe.position.z);
-      updateMarkerPosition(worldPos);
+      if (isSpeaking) {
+        speechSynth.cancel();
+        isSpeaking = false;
+        speakerBtn.classList.remove("speaking");
+        speakerBtn.textContent = "🔊";
+      }
+
+      const dir = markerWorldPos.clone().normalize();
+      const dist = camera.position.distanceTo(controls.target);
+      const targetCamPos = markerWorldPos.clone().add(dir.clone().multiplyScalar(dist * 0.55));
+      animateCamera(targetCamPos, markerWorldPos.clone().multiplyScalar(0.15));
     }
-  }
-  
-  renderer.render(scene, camera);
-}
-animate();
 
-window.addEventListener("resize", () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-});
+    /* ============================================================
+       تحديث موقع النقطة الثابتة
+       ============================================================ */
+    function updateMarkerPosition(worldPos) {
+      const projected = worldPos.clone().project(camera);
+      const x = (projected.x * 0.5 + 0.5) * window.innerWidth;
+      const y = (-projected.y * 0.5 + 0.5) * window.innerHeight;
 
-/* ============================================================
-   الأحداث
-   ============================================================ */
+      if (projected.z < 1 && projected.z > -1 && isMarkerVisible) {
+        marker.style.left = x + "px";
+        marker.style.top = y + "px";
+        marker.style.display = "block";
+      } else if (isMarkerVisible) {
+        marker.style.display = "none";
+      }
+    }
 
-// إعادة ضبط العرض
-document.getElementById("reset-view").addEventListener("click", () => {
-  const dist = modelRadius * 2.6;
-  animateCamera(
-    new THREE.Vector3(dist * 0.15, dist * 0.2, dist * 0.95),
-    new THREE.Vector3(0, -modelRadius * 0.1, 0)
-  );
-  panel.classList.remove("open");
-  document.querySelectorAll(".lobe-chip").forEach(el => el.classList.remove("active"));
-  selectedId = null;
-  marker.style.display = "none";
-  if (isSpeaking) {
-    speechSynth.cancel();
-    isSpeaking = false;
-    speakerBtn.classList.remove("speaking");
-    speakerBtn.textContent = "🔊";
-  }
-});
+    /* ============================================================
+       تحريك الكاميرا
+       ============================================================ */
+    let camAnim = null;
 
-// إغلاق لوحة المعلومات
-document.querySelector("#panel .close").addEventListener("click", () => {
-  panel.classList.remove("open");
-  document.querySelectorAll(".lobe-chip").forEach(el => el.classList.remove("active"));
-  selectedId = null;
-  marker.style.display = "none";
-  if (isSpeaking) {
-    speechSynth.cancel();
-    isSpeaking = false;
-    speakerBtn.classList.remove("speaking");
-    speakerBtn.textContent = "🔊";
-  }
-});
+    function animateCamera(toPos, toTarget) {
+      if (camAnim) cancelAnimationFrame(camAnim);
+      const fromPos = camera.position.clone();
+      const fromTarget = controls.target.clone();
+      const start = performance.now();
+      const dur = 700;
 
-// زر السماعة
-speakerBtn.addEventListener("click", (e) => {
-  e.stopPropagation();
-  const text = panelDesc.textContent;
-  if (text && text !== "—") {
-    speakText(text);
-  }
-});
+      function step(t) {
+        const p = Math.min(1, (t - start) / dur);
+        const e = 1 - Math.pow(1 - p, 3);
+        camera.position.lerpVectors(fromPos, toPos, e);
+        controls.target.lerpVectors(fromTarget, toTarget, e);
+        controls.update();
+        if (p < 1) camAnim = requestAnimationFrame(step);
+      }
+      camAnim = requestAnimationFrame(step);
+    }
 
-// تغيير اللون
-colorPicker.addEventListener("input", (e) => setBrainColor(e.target.value));
+    /* ============================================================
+       قراءة النص - زر السماعة
+       ============================================================ */
+    function speakText(text) {
+      if (!window.speechSynthesis) {
+        alert("المتصفح لا يدعم خاصية القراءة الصوتية");
+        return;
+      }
 
-colorPresets.forEach(preset => {
-  preset.addEventListener("click", () => {
-    const color = preset.dataset.color;
-    setBrainColor(color);
-    colorPresets.forEach(p => p.classList.toggle("active", p.dataset.color === color));
-  });
-});
+      if (isSpeaking) {
+        speechSynth.cancel();
+        isSpeaking = false;
+        speakerBtn.classList.remove("speaking");
+        speakerBtn.textContent = "🔊";
+        return;
+      }
 
-// زر إعادة بناء المواد
-rebuildBtn.addEventListener("click", () => {
-  const color = colorPicker.value;
-  rebuildBrainMaterials(color);
-  rebuildBtn.textContent = "✅ تم";
-  setTimeout(() => { rebuildBtn.textContent = "🔄 تطبيق"; }, 1500);
-});
+      speechSynth.cancel();
 
-/* ============================================================
-   بدء التحميل
-   ============================================================ */
-loadModel();
-</script>
+      function buildAndSpeak() {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = "ar-SA";
+        utterance.rate = 0.85;
+        utterance.pitch = 1;
+        utterance.volume = 1;
+
+        const voices = speechSynth.getVoices();
+        const arabicVoice = voices.find(v => v.lang.startsWith("ar"));
+        if (arabicVoice) utterance.voice = arabicVoice;
+
+        currentUtterance = utterance;
+
+        utterance.onstart = () => {
+          isSpeaking = true;
+          speakerBtn.classList.add("speaking");
+          speakerBtn.textContent = "⏹️";
+        };
+
+        utterance.onend = () => {
+          isSpeaking = false;
+          speakerBtn.classList.remove("speaking");
+          speakerBtn.textContent = "🔊";
+          currentUtterance = null;
+        };
+
+        utterance.onerror = (e) => {
+          console.warn("خطأ في القراءة الصوتية:", e);
+          isSpeaking = false;
+          speakerBtn.classList.remove("speaking");
+          speakerBtn.textContent = "🔊";
+          currentUtterance = null;
+        };
+
+        speechSynth.speak(utterance);
+      }
+
+      const voices = speechSynth.getVoices();
+      if (voices.length === 0) {
+        let started = false;
+        const runOnce = () => {
+          if (started) return;
+          started = true;
+          buildAndSpeak();
+        };
+        speechSynth.addEventListener("voiceschanged", runOnce, { once: true });
+        setTimeout(runOnce, 400);
+      } else {
+        buildAndSpeak();
+      }
+    }
+
+    /* ============================================================
+       بناء القائمة الجانبية
+       ============================================================ */
+    function buildLobeList() {
+      lobeListEl.innerHTML = "";
+      LOBES.forEach((lobe) => {
+        const chip = document.createElement("div");
+        chip.className = "lobe-chip";
+        chip.dataset.id = lobe.id;
+        chip.innerHTML = `
+          <span class="color-dot" style="background:${lobe.color};"></span>
+          ${lobe.icon} ${lobe.title}
+        `;
+        chip.addEventListener("click", () => selectLobe(lobe.id));
+        lobeListEl.appendChild(chip);
+      });
+    }
+
+    /* ============================================================
+       تحميل الموديل
+       ============================================================ */
+    function loadModel() {
+      loaderStatus.textContent = "جارِ تحميل الموديل…";
+      const loaderGLTF = new GLTFLoader();
+
+      loaderGLTF.load(
+        "brain.glb",
+        (gltf) => {
+          loaderStatus.textContent = "تم التحميل! جاري التجهيز…";
+          setTimeout(() => onModelLoaded(gltf), 300);
+        },
+        (xhr) => {
+          if (xhr.lengthComputable) {
+            const pct = Math.round((xhr.loaded / xhr.total) * 100);
+            loaderStatus.textContent = `جارِ التحميل… ${pct}%`;
+          }
+        },
+        (err) => {
+          console.error(err);
+          loaderStatus.textContent = "⚠️ لم يتم العثور على ملف brain.glb";
+          loaderStatus.style.color = "var(--danger)";
+        }
+      );
+    }
+
+    function onModelLoaded(gltf) {
+      const model = gltf.scene;
+
+      const box = new THREE.Box3().setFromObject(model);
+      const size = new THREE.Vector3();
+      box.getSize(size);
+      modelRadius = Math.max(size.x, size.y, size.z) / 2;
+
+      const center = new THREE.Vector3();
+      box.getCenter(center);
+      model.position.sub(center);
+      modelCenter.copy(center);
+
+      brainMeshes = [];
+      model.traverse((child) => {
+        if (child.isMesh) {
+          child.castShadow = false;
+          child.receiveShadow = false;
+          brainMeshes.push(child);
+        }
+      });
+
+      console.log(`✅ تم العثور على ${brainMeshes.length} قطعة`);
+
+      rebuildBrainMaterials("#c97878");
+
+      brainGroup.add(model);
+
+      const scaleFactor = 0.7;
+      brainScale = scaleFactor;
+      brainGroup.scale.set(scaleFactor, scaleFactor, scaleFactor);
+
+      const dist = modelRadius * 2.0 * scaleFactor;
+      camera.position.set(dist * 0.15, dist * 0.2, dist * 0.95);
+      controls.target.set(0, -modelRadius * 0.1 * scaleFactor, 0);
+      controls.minDistance = modelRadius * 0.5 * scaleFactor;
+      controls.maxDistance = modelRadius * 5 * scaleFactor;
+      controls.update();
+
+      buildLobeList();
+
+      setTimeout(() => {
+        headerLogo.classList.add("hidden");
+      }, 1000);
+
+      setTimeout(() => {
+        selectLobe("frontal");
+      }, 500);
+
+      loader.style.transition = "opacity 0.5s ease";
+      loader.style.opacity = "0";
+      setTimeout(() => {
+        loader.style.display = "none";
+      }, 500);
+    }
+
+    /* ============================================================
+       Animation Loop
+       ============================================================ */
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+
+      if (isMarkerVisible && selectedId) {
+        updateMarkerPosition(markerWorldPos);
+      }
+
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    /* ============================================================
+       الأحداث
+       ============================================================ */
+
+    panelClose.addEventListener("click", () => {
+      panelOverlay.classList.remove("open");
+      document.querySelectorAll(".lobe-chip").forEach(el => el.classList.remove("active"));
+      if (isSpeaking) {
+        speechSynth.cancel();
+        isSpeaking = false;
+        speakerBtn.classList.remove("speaking");
+        speakerBtn.textContent = "🔊";
+      }
+    });
+
+    panelOverlay.addEventListener("click", (e) => {
+      if (e.target === panelOverlay) {
+        panelOverlay.classList.remove("open");
+        document.querySelectorAll(".lobe-chip").forEach(el => el.classList.remove("active"));
+        if (isSpeaking) {
+          speechSynth.cancel();
+          isSpeaking = false;
+          speakerBtn.classList.remove("speaking");
+          speakerBtn.textContent = "🔊";
+        }
+      }
+    });
+
+    speakerBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const text = panelDesc.textContent;
+      if (text && text !== "—") {
+        speakText(text);
+      }
+    });
+
+    colorPicker.addEventListener("input", (e) => setBrainColor(e.target.value));
+
+    colorPresets.forEach(preset => {
+      preset.addEventListener("click", () => {
+        const color = preset.dataset.color;
+        setBrainColor(color);
+        colorPresets.forEach(p => p.classList.toggle("active", p.dataset.color === color));
+      });
+    });
+
+    /* ============================================================
+       بدء التحميل
+       ============================================================ */
+    loadModel();
+  </script>
 </body>
+
 </html>
